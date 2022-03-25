@@ -1,0 +1,13 @@
+.message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.galleryImage {
+  width: 400px;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
