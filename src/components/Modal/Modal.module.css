@@ -1,6 +1,6 @@
 .modal_backdrop {
   position: fixed;
-  top: 0;
+  top: 64px;
   left: 0;
   width: 100vw;
   height: 100vh;
@@ -15,7 +15,6 @@
   max-width: calc(100vw - 48px);
   max-height: calc(100vh - 24px);
 }
-
 
 .modal_content {
   position: absolute;

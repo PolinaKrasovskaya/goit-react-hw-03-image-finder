@@ -13,5 +13,5 @@ export default function Error({ request }) {
 
 
 Error.propTypes = {
-    request: propTypes.string.isRequired,
+    request: propTypes.string,
 };
