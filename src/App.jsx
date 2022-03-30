@@ -10,7 +10,6 @@ import Button from "./components/Button/Button";
 import Modal from "./components/Modal/Modal";
 import imageAPI from "./services/image-api";
 import style from "./App.module.css";
-import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const Status = {
@@ -24,17 +23,56 @@ export default class App extends Component {
   state = {
     requestName: '',
     showModal: false,
+    showErrorModal: false,
     largeImage: '',
     status: Status.IDLE,
     imageList: [],
     error: null,
     loading: false,
     page: 1,
+    totalResults: 0,
   };
 
-  handelFormSubmit = requestName => {
-    this.setState({ requestName });
-  };
+  handleFormSubmit = request => {
+    this.setState({
+      requestName: request,
+      page: 1,
+      imageList: [],
+      totalResults: 0,
+    })
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if(prevState.requestName !== this.state.requestName) {
+      this.setState({ 
+        status: Status.PENDING,
+       })
+      this.fetchArticles()
+    } 
+    console.log(this.state.totalResults)
+  }
+
+  fetchArticles = () => {
+    const {requestName, page} = this.state;
+
+    imageAPI
+    .fetchPictures(requestName, page)
+    .then(response => {
+      console.log(response)
+      if( response.hits.length === 0 ) {
+        this.setState(Status.REJECTED);
+      }
+      this.setState(prevState => ({
+        imageList: [...prevState.imageList, ...response.hits],
+        status: Status.RESOLVED,
+        loading: true,
+        page: prevState.page + 1,
+        totalResults: response.hits.length,
+      }))
+    })
+    .catch(error => this.setState({ error, status: Status.REJECTED }))
+    .finally(() => this.setState({ loading: false }));
+  }
 
   toggleModal = largeImageURL => {
     this.setState(({ showModal }) => ({ 
@@ -49,49 +87,20 @@ export default class App extends Component {
     });
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevName = prevState.requestName;
-    const nextName = this.state.requestName;
-    const { page } = this.state;
-
-    if (prevName !== nextName) {
-      console.log('izmenilos')
-
-      this.setState({ status: Status.PENDING })
-
-      imageAPI
-        .fetchPictures(nextName)
-        .then(imageList =>
-          this.setState({
-            imageList: imageList.hits,
-            status: imageList.hits.length !== 0 ? Status.RESOLVED : Status.REJECTED,
-          })
-        )
-        .catch(error => this.setState({ error, status: Status.REJECTED }))
-    } 
-      else if (prevState.page < page ) {
-
-      this.setState({ loading: true });
-
-      imageAPI
-        .fetchPictures(nextName, page)
-        .then(imageList =>
-          this.setState({
-            imageList: [...prevState.imageList, ...imageList.hits],
-            status: imageList.hits.length !== 0 ? Status.RESOLVED : Status.REJECTED,
-          })
-        )
-        .catch(error => this.setState({ error, status: Status.REJECTED }))
-        .finally(() => this.setState({ loading: false }));
-    }
-  }
-
   render() {
-    const { requestName, status, showModal, largeImage, loading, imageList } = this.state;
+    const { 
+      requestName, 
+      status, 
+      showModal, 
+      largeImage, 
+      loading, 
+      imageList,
+      totalResults,
+    } = this.state;
 
     return (
       <div className={style.app}>
-        <Searchbar onSubmit={this.handelFormSubmit} />
+        <Searchbar onSubmit={this.handleFormSubmit} />
         {status === Status.IDLE && <Idle />}
         {status === Status.PENDING && <Loader />}
         {status === Status.REJECTED && <Error request={requestName} />}
@@ -99,17 +108,17 @@ export default class App extends Component {
           <ImageGallery openModal={this.toggleModal} imageList={imageList}/>
         )}
         {loading && <ButtonLoader />}
-        {imageList.length > 11 
+        {totalResults > 0 
         && !loading 
-        && status !== Status.PENDING 
-        && <Button loadMore={this.handleLoadMore} onLoadClick={this.fetchPictures} />}
+        && status !== Status.PENDING
+        &&
+         <Button loadMore={this.fetchArticles} />
+        }
         {showModal && (
           <Modal onClose={this.toggleModal} largeImage={largeImage} />
         )}
-        <ToastContainer autoClose={3000} />
+        <ToastContainer autoClose={1500} />
       </div>
     );
   }
 }
-
-
