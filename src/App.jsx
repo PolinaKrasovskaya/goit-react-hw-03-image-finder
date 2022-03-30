@@ -99,7 +99,10 @@ export default class App extends Component {
           <ImageGallery openModal={this.toggleModal} imageList={imageList}/>
         )}
         {loading && <ButtonLoader />}
-        {imageList.length > 11 && !loading && status !== Status.PENDING && <Button loadMore={this.handleLoadMore} />}
+        {imageList.length > 11 
+        && !loading 
+        && status !== Status.PENDING 
+        && <Button loadMore={this.handleLoadMore} onLoadClick={this.fetchPictures} />}
         {showModal && (
           <Modal onClose={this.toggleModal} largeImage={largeImage} />
         )}
@@ -108,4 +111,5 @@ export default class App extends Component {
     );
   }
 }
+
 
