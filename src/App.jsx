@@ -5,7 +5,6 @@ import ImageGallery from "./components/ImageGallery/ImageGallery";
 import Idle from './components/Idle/Idle';
 import Loader from './components/Loader/Loader';
 import Error from './components/Error/Error';
-import ButtonLoader from './components/ButtonLoader/ButtonLoader';
 import Button from "./components/Button/Button";
 import Modal from "./components/Modal/Modal";
 import imageAPI from "./services/image-api";
@@ -23,12 +22,10 @@ export default class App extends Component {
   state = {
     requestName: '',
     showModal: false,
-    showErrorModal: false,
     largeImage: '',
     status: Status.IDLE,
     imageList: [],
     error: null,
-    loading: false,
     page: 1,
     totalResults: 0,
   };
@@ -48,30 +45,25 @@ export default class App extends Component {
         status: Status.PENDING,
        })
       this.fetchArticles()
-    } 
-    console.log(this.state.totalResults)
+    }
   }
 
   fetchArticles = () => {
     const {requestName, page} = this.state;
-
     imageAPI
     .fetchPictures(requestName, page)
     .then(response => {
-      console.log(response)
       if( response.hits.length === 0 ) {
         this.setState(Status.REJECTED);
       }
       this.setState(prevState => ({
         imageList: [...prevState.imageList, ...response.hits],
         status: Status.RESOLVED,
-        loading: true,
         page: prevState.page + 1,
         totalResults: response.hits.length,
       }))
     })
     .catch(error => this.setState({ error, status: Status.REJECTED }))
-    .finally(() => this.setState({ loading: false }));
   }
 
   toggleModal = largeImageURL => {
@@ -81,19 +73,12 @@ export default class App extends Component {
     }));
   };
 
-  handleLoadMore = () => {
-    this.setState({ 
-      page: this.state.page + 1,
-    });
-  };
-
   render() {
     const { 
       requestName, 
       status, 
       showModal, 
       largeImage, 
-      loading, 
       imageList,
       totalResults,
     } = this.state;
@@ -107,12 +92,10 @@ export default class App extends Component {
         {status === Status.RESOLVED && (
           <ImageGallery openModal={this.toggleModal} imageList={imageList}/>
         )}
-        {loading && <ButtonLoader />}
         {totalResults > 0 
-        && !loading 
         && status !== Status.PENDING
-        &&
-         <Button loadMore={this.fetchArticles} />
+        && imageList.length > 12
+        && <Button loadMore={this.fetchArticles} />
         }
         {showModal && (
           <Modal onClose={this.toggleModal} largeImage={largeImage} />
